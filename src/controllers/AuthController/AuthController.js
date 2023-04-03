@@ -1,3 +1,13 @@
-exports.getTest = (req, res, next) => {
-  res.send("Hello");
-};
+const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
+exports.singleUser = catchAsyncErrors(async (req, res, next) => {});
+exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {});
+exports.signup = catchAsyncErrors(async (req, res, next) => {});
+exports.signin = catchAsyncErrors(async (req, res, next) => {});
+exports.signout = catchAsyncErrors(async (req, res, next) => {});
+exports.sendVerificationCode = catchAsyncErrors(async (req, res, next) => {});
+exports.userVerify = catchAsyncErrors(async (req, res, next) => {});
+exports.forgetPassword = catchAsyncErrors(async (req, res, next) => {});
+exports.resetPassword = catchAsyncErrors(async (req, res, next) => {});
+exports.updateProfile = catchAsyncErrors(async (req, res, next) => {});
+exports.updateAvatar = catchAsyncErrors(async (req, res, next) => {});
+exports.deleteUser = catchAsyncErrors(async (req, res, next) => {});
