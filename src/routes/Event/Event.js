@@ -12,13 +12,13 @@ const {
 
 const router = express.Router();
 
-router.get("/events", allEvent);
-router.post("/events", createEvent);
-router.get("/events/eventId", singleEvent);
-router.put("/events/eventId", updateEvent);
-router.delete("/events/eventId", removeEvent);
-router.patch("/events/uploadCover", uploadCover);
-router.patch("/events/uploadImages", uploadImages);
-router.post("/events/uploadThumbline", uploadThumbline);
+router.get("/", allEvent);
+router.post("/", createEvent);
+router.get("/eventId", singleEvent);
+router.put("/eventId", updateEvent);
+router.delete("/eventId", removeEvent);
+router.patch("/uploadCover", uploadCover);
+router.patch("/uploadImages", uploadImages);
+router.post("/uploadThumbline", uploadThumbline);
 
 module.exports = router;

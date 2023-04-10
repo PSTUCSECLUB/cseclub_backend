@@ -1,4 +1,8 @@
 const express = require("express");
+const router = express.Router();
+const multer = require("multer");
+const { storage } = require("../../config/cloudinary");
+const parser = multer({ storage });
 const {
   singleUser,
   getAllUsers,
@@ -12,30 +16,32 @@ const {
   updateProfile,
   updateAvatar,
   deleteUser,
+  getUserDetails,
 } = require("../../controllers/AuthController/AuthController");
-const router = express.Router();
+const { isAuthenticatedUser } = require("../../middleware/verifyAuth");
 
-// all users
-router.get("/users", getAllUsers);
-// get user by id
-router.get("/users/userId", singleUser);
-// signup, signin, signout
-router.post("/users/singup", signup);
-router.post("/users/signin", signin);
-router.get("/users/sigout", signout);
+router.get("/", getAllUsers);
 
-// verification code
-router.post("/users/sendVerification", sendVerificationCode);
-// verify
-router.post("/users/verify", userVerify);
-// forgetPassword, resetPassword, update
-router.post("/users/forgetPassword", forgetPassword);
-router.patch("/users/resetPassword", resetPassword);
-router.patch("/users/updateProfile", updateProfile);
-router.patch("/users/updateAvatar", updateAvatar);
+router.get("/userProfile", isAuthenticatedUser, getUserDetails);
 
-// remove user
-router.delete("/users/userId", deleteUser);
+router.get("/:userId", singleUser);
+
+// auth routes
+router.post("/singup", parser.single("avatar"), signup);
+router.post("/signin", signin);
+router.get("/sigout", signout);
+
+router.post("/sendVerification", sendVerificationCode);
+
+router.post("/verify", userVerify);
+
+router.post("/forgetPassword", forgetPassword);
+router.patch("/resetPassword", resetPassword);
+router.patch("/updateProfile", updateProfile);
+router.patch("/updateAvatar", updateAvatar);
+
+router.delete("/:userId", deleteUser);
+
 //router.delete("/users/", deleteUser);
 
 module.exports = router;
