@@ -4,28 +4,70 @@ const jwt = require("jsonwebtoken");
 const { Schema } = mongoose;
 
 const userSchema = new Schema({
-  name: { type: String, required: true },
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  avatar: { type: String },
-  registration: { type: Number },
+  name: {
+    type: String,
+    required: true,
+  },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  avatar: {
+    type: String,
+  },
+  registration: {
+    type: Number,
+  },
   fId: { type: Number },
-  session: { type: String },
-  isAlumni: { type: Boolean, default: false },
-  isVerified: { type: Boolean, default: false },
+  session: {
+    type: String,
+  },
+  isAlumni: {
+    type: Boolean,
+    default: false,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
   socialLinks: [
     {
       media: { type: String, enum: ["facebook", "twitter", "linkedin"] },
       url: { type: String },
     },
   ],
-  currentJob: { type: String },
-  currentCompany: { type: String },
-  description: { type: String },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-  role: { type: String, enum: ["user", "admin"], default: "user" },
+  currentJob: {
+    type: String,
+  },
+  currentCompany: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
+  },
 });
 
 // password hash
