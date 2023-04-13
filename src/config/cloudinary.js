@@ -16,7 +16,16 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const eventStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "event-images",
+    allowed_formats: ["jpg", "jpeg", "png", "gif"],
+  },
+});
+
 module.exports = {
   cloudinary,
   storage,
+  eventStorage,
 };

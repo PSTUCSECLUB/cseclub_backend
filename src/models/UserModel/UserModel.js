@@ -2,86 +2,31 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Schema } = mongoose;
-const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
+
+const userSchema = new Schema({
+  name: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  avatar: { type: String },
+  registration: { type: Number },
+  fId: { type: Number },
+  session: { type: String },
+  isAlumni: { type: Boolean, default: false },
+  isVerified: { type: Boolean, default: false },
+  socialLinks: [
+    {
+      media: { type: String, enum: ["facebook", "twitter", "linkedin"] },
+      url: { type: String },
     },
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      required: [true, "Please enter your email"],
-      lowercase: true,
-      validate: {
-        validator: function (value) {
-          return /^[\w-]+@cse\.pstu\.ac\.bd$/.test(value);
-        },
-        message: "Please enter a your university mail",
-      },
-    },
-    password: {
-      type: String,
-      required: true,
-      required: [true, "Please enter your password"],
-      minLength: [8, "Must be at least 8"],
-      select: false,
-    },
-    avatar: {
-      type: String,
-    },
-    registration: {
-      type: Number,
-      required: true,
-    },
-    fId: {
-      type: Number,
-      required: true,
-    },
-    session: {
-      type: Number,
-      required: true,
-    },
-    isAlumni: {
-      type: Boolean,
-      default: false,
-    },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    socialLinks: {
-      type: [String],
-    },
-    currentJob: {
-      type: String,
-    },
-    currentCompany: {
-      type: String,
-    },
-    description: {
-      type: String,
-    },
-    blogs: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Blog",
-      },
-    ],
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: Date,
-  },
-  { timestamps: true }
-);
+  ],
+  currentJob: { type: String },
+  currentCompany: { type: String },
+  description: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  role: { type: String, enum: ["user", "admin"], default: "user" },
+});
 
 // password hash
 userSchema.pre("save", async function (next) {
