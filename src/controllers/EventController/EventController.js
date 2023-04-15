@@ -1,11 +1,17 @@
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
 const ErrorHandler = require("../../utils/ErrorHandler");
 const Event = require("../../models/EventModel/EventModel");
-const { getPublicId, getPublicIdList } = require("../../utils/cloud");
+const {
+  getPublicId,
+  getPublicIdList,
+  removeImageFromCloud,
+  removeImageFromCloudList,
+} = require("../../utils/cloud");
+const APIFeatures = require("../../utils/ApiFeatures");
 
 exports.allEvent = catchAsyncErrors(async (req, res, next) => {
   const eventCount = await Event.countDocuments();
-  const apiFeatures = new APIFeatures(Blog.find(), req.query)
+  const apiFeatures = new APIFeatures(Event.find(), req.query)
     .filter()
     .limitFields()
     .sort()
@@ -35,10 +41,10 @@ exports.createEvent = catchAsyncErrors(async (req, res, next) => {
   } = req.body;
 
   const imageUrls = [];
-  for (let i = 0; i < req.files?.galleryImgs.length; i++) {
+  for (let i = 0; i < req.files?.galleryImgs?.length; i++) {
     imageUrls.push(req.files.galleryImgs[i].path);
   }
-
+  console.log(req.author);
   const event = new Event({
     title,
     subTitle,
@@ -78,6 +84,7 @@ exports.singleEvent = catchAsyncErrors(async (req, res, next) => {
 });
 
 //! json data
+// * ("MM/DD/YYYY hh:mm:ss"))
 exports.updateEvent = catchAsyncErrors(async (req, res, next) => {
   try {
     let event = await Event.findById(req.params.eventId);
@@ -87,10 +94,11 @@ exports.updateEvent = catchAsyncErrors(async (req, res, next) => {
     }
 
     if (
-      event.author.toString() === req.user._id.toString() ||
+      event.createdBy.toString() === req.user._id.toString() ||
       req.user.role === "admin"
     ) {
       try {
+        console.log(req.body);
         event = await Event.findByIdAndUpdate(
           req.params.eventId,
           {
@@ -121,6 +129,7 @@ exports.updateEvent = catchAsyncErrors(async (req, res, next) => {
 exports.removeEvent = catchAsyncErrors(async (req, res, next) => {
   try {
     let event = await Event.findById(req.params.eventId);
+    console.log(event);
 
     if (!event) {
       return next(new ErrorHandler("Event not found", 404));
@@ -131,8 +140,10 @@ exports.removeEvent = catchAsyncErrors(async (req, res, next) => {
     //! array
     const galleryImgsId = getPublicIdList(event.galleryImgs);
 
+    console.log(event.createdBy.toString(), req.user._id.toString());
+
     if (
-      event.author.toString() === req.user._id.toString() ||
+      event.createdBy.toString() === req.user._id.toString() ||
       req.user.role === "admin"
     ) {
       try {
@@ -148,6 +159,7 @@ exports.removeEvent = catchAsyncErrors(async (req, res, next) => {
         });
       } catch (error) {
         res.status(500).json(error);
+        console.log(error);
       }
     } else {
       return next(new ErrorHandler("Admin can update the event", 401));
@@ -170,7 +182,7 @@ exports.uploadCover = catchAsyncErrors(async (req, res, next) => {
       }
 
       if (
-        event.author.toString() === req.user._id.toString() ||
+        event.createdBy.toString() === req.user._id.toString() ||
         req.user.role === "admin"
       ) {
         const coverImgId = getPublicId(event.coverImg);
@@ -218,7 +230,7 @@ exports.uploadImages = catchAsyncErrors(async (req, res, next) => {
       const galleryImgsId = getPublicIdList(event.galleryImgs);
 
       if (
-        event.author.toString() === req.user._id.toString() ||
+        event.createdBy.toString() === req.user._id.toString() ||
         req.user.role === "admin"
       ) {
         removeImageFromCloudList(galleryImgsId);
@@ -268,7 +280,7 @@ exports.uploadThumbline = catchAsyncErrors(async (req, res, next) => {
       }
 
       if (
-        event.author.toString() === req.user._id.toString() ||
+        event.createdBy.toString() === req.user._id.toString() ||
         req.user.role === "admin"
       ) {
         const thumbnailId = getPublicId(event.thumbnail);

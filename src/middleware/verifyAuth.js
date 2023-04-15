@@ -31,7 +31,6 @@ exports.verifyAdmin = (...roles) => {
         )
       );
     }
-    req.user.role = "admin";
     next();
   };
 };

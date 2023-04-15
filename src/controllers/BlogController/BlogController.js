@@ -29,12 +29,13 @@ exports.createBlog = catchAsyncErrors(async (req, res, next) => {
 
 exports.allBlog = catchAsyncErrors(async (req, res, next) => {
   const blogCount = await Blog.countDocuments();
+  console.log(req.query);
   const apiFeatures = new APIFeatures(Blog.find(), req.query)
+    .search()
     .filter()
-    .limitFields()
     .sort()
-    .paginate()
-    .search();
+    .limitFields()
+    .paginate();
 
   const allBlogs = await apiFeatures.query;
 

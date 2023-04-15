@@ -20,6 +20,7 @@ const {
 const router = express.Router();
 
 router.get("/", allEvent);
+
 router.post(
   "/",
   isAuthenticatedUser,
@@ -53,7 +54,7 @@ router.patch(
   parser.fields([{ name: "galleryImgs", maxCount: 5 }]),
   uploadImages
 );
-router.post(
+router.patch(
   "/uploadThumbline/:eventId",
   isAuthenticatedUser,
   verifyAdmin("admin"),
