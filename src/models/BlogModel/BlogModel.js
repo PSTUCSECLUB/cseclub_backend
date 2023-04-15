@@ -21,14 +21,22 @@ const BlogSchema = new mongoose.Schema({
   category: [
     {
       type: String,
-      enum: ["Tech", "CP", "Development", "Programming"],
+      enum: [
+        "Tech",
+        "Competitive Programming",
+        "Development",
+        "Programming",
+        "Guidelines",
+      ],
       required: true,
+      _id: false,
     },
   ],
   tags: [
     {
       type: String,
       required: false,
+      _id: false,
     },
   ],
   description: {

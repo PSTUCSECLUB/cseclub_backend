@@ -27,7 +27,7 @@ router.get("/userProfile", isAuthenticatedUser, getUserDetails);
 router.get("/:userId", singleUser);
 
 // auth routes
-router.post("/singup", parser.single("avatar"), signup);
+router.post("/singup", parser.single("avatar"), signup); //parser.single("avatar")
 router.post("/signin", signin);
 router.get("/sigout", signout);
 

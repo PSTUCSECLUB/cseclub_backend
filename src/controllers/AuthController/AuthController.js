@@ -1,7 +1,6 @@
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
 const User = require("../../models/UserModel/UserModel");
 const ErrorHandler = require("../../utils/ErrorHandler");
-
 // signup
 exports.signup = catchAsyncErrors(async (req, res, next) => {
   const avatar = req.file.path;
@@ -18,6 +17,7 @@ exports.signup = catchAsyncErrors(async (req, res, next) => {
     currentJob,
     currentCompany,
     description,
+    role,
   } = req.body;
 
   const user = await User.create({
@@ -33,7 +33,9 @@ exports.signup = catchAsyncErrors(async (req, res, next) => {
     currentJob,
     currentCompany,
     description,
+    role,
   });
+
   const token = user.getJWTToken();
   res.status(201).json({
     token,
@@ -43,7 +45,6 @@ exports.signup = catchAsyncErrors(async (req, res, next) => {
 // signin
 exports.signin = catchAsyncErrors(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(email, password);
 
   if (!email || !password) {
     return next(new ErrorHandler("Please enter email or password", 400));

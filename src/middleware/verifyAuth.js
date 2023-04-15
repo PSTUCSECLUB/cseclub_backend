@@ -14,8 +14,24 @@ exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
         new ErrorHandler("Please login to access the resource.", 401)
       );
     }
+
     const decodedData = jwt.verify(Token, process.env.JWT_TOKEN_SECRET);
     req.user = await User.findById(decodedData.id);
     next();
   }
 });
+
+exports.verifyAdmin = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ErrorHandler(
+          `Role : ${req.user.role} is not allow to access the resource`,
+          403
+        )
+      );
+    }
+    req.user.role = "admin";
+    next();
+  };
+};

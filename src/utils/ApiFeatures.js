@@ -12,10 +12,25 @@
 
 class APIFeatures {
   // query: Model.find will return a query object which is taken here as query
-  // string:  string is the querystring from the requrest
+  // string:  string is the querystring from the request
   constructor(query, queryString) {
     this.query = query;
     this.queryString = queryString;
+  }
+
+  // search depend on title
+  search() {
+    const keyword = this.queryString.keyword
+      ? {
+          title: {
+            $regex: this.queryString.keyword,
+            $options: "i",
+          },
+        }
+      : {};
+
+    this.query = this.query.find({ ...keyword });
+    return this;
   }
 
   // Query should be look like this: duration[gte]=3&endDate[gte]=11/12/2023&&startDate[lte]=10/12/2023

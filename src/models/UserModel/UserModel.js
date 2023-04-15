@@ -42,6 +42,7 @@ const userSchema = new Schema({
   },
   socialLinks: [
     {
+      _id: false,
       media: { type: String, enum: ["facebook", "twitter", "linkedin"] },
       url: { type: String },
     },
@@ -92,6 +93,7 @@ userSchema.methods.getJWTToken = function () {
       registration: this.registration,
       fId: this.fId,
       session: this.session,
+      role: this.role,
     },
     process.env.JWT_TOKEN_SECRET,
     {

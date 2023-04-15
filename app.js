@@ -10,13 +10,14 @@ const xss = require("xss-clean");
 const hpp = require("hpp");
 const createError = require("http-errors");
 const router = require("./src/routes");
+const ErrorHandler = require("./src/middleware/error");
 
 const app = express();
 
 app.use(cors());
 app.use(morgan("dev"));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(mongoSanitize());
 app.use(xss());
@@ -35,6 +36,7 @@ app.use(limiter);
 
 app.use("/api/v1", router);
 // custom error middleware
+app.use(ErrorHandler);
 app.use(async (req, res, next) => {
   //next(createError.NotFound());
   res.send(createError.NotFound());
