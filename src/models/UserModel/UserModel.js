@@ -97,7 +97,7 @@ userSchema.methods.getJWTToken = function () {
     },
     process.env.JWT_TOKEN_SECRET,
     {
-      expiresIn: "2h",
+      expiresIn: process.env.JWT_EXPIRE,
     }
   );
 };

@@ -232,7 +232,7 @@ exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
 exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
   const userCount = await User.countDocuments();
   const apiFeatures = new APIFeatures(User.find(), req.query)
-    .search()
+    .searchByName()
     .filter()
     .sort()
     .limitFields()
