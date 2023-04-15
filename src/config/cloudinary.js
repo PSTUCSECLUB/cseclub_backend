@@ -31,9 +31,18 @@ const blogStorage = new CloudinaryStorage({
   },
 });
 
+const specialStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "special-images",
+    allowed_formats: ["jpg", "jpeg", "png", "gif"],
+  },
+});
+
 module.exports = {
   cloudinary,
   storage,
   eventStorage,
   blogStorage,
+  specialStorage,
 };
