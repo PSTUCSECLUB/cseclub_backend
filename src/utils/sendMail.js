@@ -1,9 +1,9 @@
 const { transporter } = require("../config/nodemailer");
 const { mailTemplate } = require("../helpers/mailgen");
 const dotenv = require("dotenv").config();
-exports.sendEmail = async ({ email, subject, name, verifyCode }) => {
+exports.sendEmail = async ({ email, subject, name, verifyCode, text }) => {
   try {
-    const mail = mailTemplate(name, verifyCode);
+    const mail = mailTemplate(name, verifyCode, text);
 
     const mailOptions = {
       from: process.env.EMAIL_USER,

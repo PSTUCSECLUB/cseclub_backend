@@ -5,12 +5,15 @@ const verifyEmail = async (user, req, res, next) => {
   const verifyCode = user.getVerificationCode();
   await user.save();
 
+  const text = "Here is your Email Verification Code";
+
   try {
     await sendMail.sendEmail({
       email: user.email,
       name: user.name,
       subject: "Email Verification",
       verifyCode: verifyCode,
+      text: text,
     });
 
     res.status(200).json({

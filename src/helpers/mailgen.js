@@ -1,5 +1,5 @@
 const Mailgen = require("mailgen");
-exports.mailTemplate = (name, verifyCode) => {
+exports.mailTemplate = (name, verifyCode, text) => {
   let MailGenerator = new Mailgen({
     theme: "default",
     product: {
@@ -16,7 +16,7 @@ exports.mailTemplate = (name, verifyCode) => {
       intro:
         "Welcome to PSTU CSE CLUB! We're very excited to have you on CLUB.",
       action: {
-        instructions: "Here is your Email Verification Code",
+        instructions: text,
         button: {
           color: "#22BC66",
           text: verifyCode,
