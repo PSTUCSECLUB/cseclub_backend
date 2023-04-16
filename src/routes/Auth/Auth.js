@@ -19,7 +19,10 @@ const {
   getUserDetails,
   updateRoles,
 } = require("../../controllers/AuthController/AuthController");
-const { isAuthenticatedUser } = require("../../middleware/verifyAuth");
+const {
+  isAuthenticatedUser,
+  verifyAdmin,
+} = require("../../middleware/verifyAuth");
 
 router.get("/", getAllUsers);
 

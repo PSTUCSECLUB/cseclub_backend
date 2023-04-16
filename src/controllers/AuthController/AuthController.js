@@ -1,3 +1,6 @@
+const forgetPasswordCodeSendEmail = require("../../helpers/forgetPasswordCodeEmailSend");
+const sentToken = require("../../helpers/jwt_token");
+const verifyEmail = require("../../helpers/verfiyEmail");
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
 const User = require("../../models/UserModel/UserModel");
 const APIFeatures = require("../../utils/ApiFeatures");
@@ -38,10 +41,7 @@ exports.signup = catchAsyncErrors(async (req, res, next) => {
     role,
   });
 
-  const token = user.getJWTToken();
-  res.status(201).json({
-    token,
-  });
+  sentToken(user, 200, res);
 });
 
 // signin
@@ -63,11 +63,7 @@ exports.signin = catchAsyncErrors(async (req, res, next) => {
   if (!isPasswordMatch) {
     return next(new ErrorHandler("Invalid email or password", 401));
   }
-
-  const token = user.getJWTToken();
-  res.status(201).json({
-    token,
-  });
+  sentToken(user, 200, res);
 });
 
 exports.signout = catchAsyncErrors(async (req, res, next) => {
@@ -98,19 +94,105 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+/** * POST: {{BaseUrl}}/users/sendVerification
+ * @param : {
+ * "email": "example@gmail.com",
+}
+*/
 exports.sendVerificationCode = catchAsyncErrors(async (req, res, next) => {
-  res.send("Hello World! ");
-});
-exports.userVerify = catchAsyncErrors(async (req, res, next) => {
-  res.send("Hello World! ");
-});
-exports.forgetPassword = catchAsyncErrors(async (req, res, next) => {
-  res.send("Hello World! ");
-});
-exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
-  res.send("Hello World! ");
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new ErrorHandler("Provide Email", 404));
+  }
+
+  const user = await User.findOne({ email: email });
+
+  verifyEmail(user, req, res, next);
 });
 
+/** * POST: {{BaseUrl}}/users/verify
+ * @param : {
+ * "verificationCode": "1juolp",
+}
+*/
+
+exports.userVerify = catchAsyncErrors(async (req, res, next) => {
+  const { verificationCode } = req.body;
+
+  const user = await User.findOne({
+    verificationCode,
+    verificationCodeExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new ErrorHandler("Token is invalid or has been expired", 400));
+  }
+
+  user.isVerified = true;
+  user.verificationCode = undefined;
+  user.verificationCodeExpires = undefined;
+
+  await user.save();
+  sentToken(user, 200, res);
+});
+
+/** * {{BaseUrl}}/users/forgetPassword
+ * @param : {
+ * BaseUrl: http://localhost:5000/api/v1
+ * "email": "example@gmail.com",
+}
+*/
+
+exports.forgetPassword = catchAsyncErrors(async (req, res, next) => {
+  const { email } = req.body;
+  if (!email) {
+    return next(new ErrorHandler("Provide Email", 404));
+  }
+
+  const user = await User.findOne({ email: email });
+  forgetPasswordCodeSendEmail(user, req, res, next);
+});
+
+/** * {{BaseUrl}}/users/resetPassword
+ * @param : {
+ * BaseUrl: http://localhost:5000/api/v1
+ * "resetPasswordCode": "74lipp",
+ * "password": xyzekk79
+ * "confirmPassword": xyzekk79
+}
+*/
+
+exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
+  const { resetPasswordCode, password, confirmPassword } = req.body;
+
+  const user = await User.findOne({
+    resetPasswordCode,
+    resetPasswordCodeExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(
+      new ErrorHandler(
+        "Reset Password Token is invalid or has been expired",
+        400
+      )
+    );
+  }
+
+  if (password !== confirmPassword) {
+    return next(new ErrorHandler("Password does not match", 400));
+  }
+
+  user.password = req.body.password;
+  user.resetPasswordCode = undefined;
+  user.resetPasswordCodeExpires = undefined;
+
+  await user.save();
+  sentToken(user, 200, res);
+});
+
+//! update Profile
 exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
   try {
     let user = await User.findById(req.user._id);

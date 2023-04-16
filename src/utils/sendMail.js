@@ -1,28 +1,19 @@
-const nodemailer = require("nodemailer");
-
-// Create a transporter for sending emails
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "your_gmail_email_address",
-    pass: "your_gmail_password",
-  },
-});
-
-// Example function for sending email
-async function sendEmail(toEmail, subject, message) {
+const { transporter } = require("../config/nodemailer");
+const { mailTemplate } = require("../helpers/mailgen");
+const dotenv = require("dotenv").config();
+exports.sendEmail = async ({ email, subject, name, verifyCode }) => {
   try {
+    const mail = mailTemplate(name, verifyCode);
+
     const mailOptions = {
-      from: "your_gmail_email_address",
-      to: toEmail,
+      from: process.env.EMAIL_USER,
+      to: email,
       subject: subject,
-      text: message,
+      html: mail,
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", result);
   } catch (error) {
     console.error("Failed to send email:", error);
-    throw new Error("Failed to send email.");
   }
-}
+};

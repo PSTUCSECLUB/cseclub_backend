@@ -69,6 +69,10 @@ const userSchema = new Schema({
     enum: ["user", "admin"],
     default: "user",
   },
+  verificationCode: String,
+  verificationCodeExpires: Date,
+  resetPasswordCode: String,
+  resetPasswordCodeExpires: Date,
 });
 
 // password hash
@@ -102,8 +106,28 @@ userSchema.methods.getJWTToken = function () {
   );
 };
 
+// compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// get Reset Password Code
+userSchema.methods.getResetPasswordCode = function () {
+  const resetCode = Math.random().toString(36).substring(2, 8);
+
+  this.resetPasswordCode = resetCode;
+  this.resetPasswordCodeExpires = Date.now() + 15 * 60 * 1000;
+
+  return resetCode;
+};
+
+// get verification code
+userSchema.methods.getVerificationCode = function () {
+  const emailVerifyCode = Math.random().toString(36).substring(2, 8);
+  this.verificationCode = emailVerifyCode;
+  this.verificationCodeExpires = Date.now() + 15 * 60 * 1000;
+
+  return emailVerifyCode;
 };
 
 const User = mongoose.model("User", userSchema);
