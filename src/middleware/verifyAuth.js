@@ -6,6 +6,10 @@ const User = require("../models/UserModel/UserModel");
 exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
   const bearer = req.headers.authorization;
 
+  if (!bearer) {
+    return next(new ErrorHandler("Please login to access the resource.", 401));
+  }
+
   if (bearer && bearer.startsWith("Bearer ")) {
     const Token = bearer.split(" ")[1];
 

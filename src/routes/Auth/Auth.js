@@ -24,7 +24,7 @@ const {
   verifyAdmin,
 } = require("../../middleware/verifyAuth");
 
-router.get("/", getAllUsers);
+router.get("/", isAuthenticatedUser, verifyAdmin("admin"), getAllUsers);
 
 router.get("/userProfile", isAuthenticatedUser, getUserDetails);
 
@@ -58,6 +58,11 @@ router.delete(
 );
 
 // ! update role
-router.put("role/:id", isAuthenticatedUser, verifyAdmin("admin"), updateRoles);
+router.patch(
+  "/role/:id",
+  isAuthenticatedUser,
+  verifyAdmin("admin"),
+  updateRoles
+);
 
 module.exports = router;

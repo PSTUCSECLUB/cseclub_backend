@@ -334,17 +334,20 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
 exports.updateRoles = catchAsyncErrors(async (req, res, next) => {
   try {
     let user = await User.findById(req.params.id);
+
     if (!user) {
       return next(
         new ErrorHandler(`User doesn't exist with id ${req.params.id}`, 404)
       );
     }
 
+    console.log(req.body.role);
+
     const updatedInfo = {
       role: req.body.role,
     };
 
-    user = await userModel.findByIdAndUpdate(req.params.id, updatedInfo, {
+    user = await User.findByIdAndUpdate(req.params.id, updatedInfo, {
       new: true,
       runValidators: true,
       useFindAndModify: false,
