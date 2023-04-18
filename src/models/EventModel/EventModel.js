@@ -6,41 +6,39 @@ const eventSchema = new Schema({
     type: String,
     required: true,
   },
-  subTitle: { type: String },
-  organizers: [
+  shortDescription: {
+    type: String,
+    required: false,
+  },
+  coverImgLand: String,
+  coverImgPort: String,
+  image: String,
+  schedules: [
     {
       _id: false,
-      companyName: { type: String },
-      companyLogo: { type: String },
+      title: String,
+      time: String,
+      detail: String,
     },
   ],
-  participants: {
-    type: Number,
-  },
-  coverImg: {
-    type: String,
-    required: true,
-  },
-  thumbnail: {
-    type: String,
-  },
-  startDate: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
-    type: Date,
-    required: true,
-  },
-  durationInHour: {
-    type: Number,
-  },
-  galleryTitle: {
-    type: String,
-  },
-  galleryImgs: [{ type: String }],
+  sponsors: [
+    {
+      _id: false,
+      name: String,
+      site: String,
+      sponsorImg: String,
+    },
+  ],
+  inEventsPage: Boolean,
+  childs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+    },
+  ],
   description: {
     type: String,
+    required: true,
   },
   createdAt: {
     type: Date,
@@ -51,7 +49,7 @@ const eventSchema = new Schema({
     default: Date.now,
   },
   createdBy: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
 });

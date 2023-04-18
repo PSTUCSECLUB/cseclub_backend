@@ -5,9 +5,10 @@ const {
   singleEvent,
   updateEvent,
   removeEvent,
-  uploadCover,
-  uploadImages,
-  uploadThumbline,
+  updateCoverImgLand,
+  updateCoverImgPort,
+  updateImage,
+  updateImagesOfSponsors,
 } = require("../../controllers/EventController/EventController");
 const multer = require("multer");
 const { eventStorage } = require("../../config/cloudinary");
@@ -21,14 +22,16 @@ const router = express.Router();
 
 router.get("/", allEvent);
 
+// ! query parameter need when you add child event
 router.post(
   "/",
   isAuthenticatedUser,
   verifyAdmin("admin"),
   parser.fields([
-    { name: "coverImg", maxCount: 1 },
-    { name: "thumbnail", maxCount: 1 },
-    { name: "galleryImgs", maxCount: 5 },
+    { name: "coverImgLand", maxCount: 1 },
+    { name: "coverImgPort", maxCount: 1 },
+    { name: "image", maxCount: 1 },
+    { name: "sponsorImg", maxCount: 8 },
   ]),
   createEvent
 );
@@ -44,22 +47,30 @@ router.patch(
   "/uploadCover/:eventId",
   isAuthenticatedUser,
   verifyAdmin("admin"),
-  parser.fields([{ name: "coverImg", maxCount: 1 }]),
-  uploadCover
+  parser.fields([{ name: "coverImgLand", maxCount: 1 }]),
+  updateCoverImgLand
 );
 router.patch(
-  "/uploadImages/:eventId",
+  "/uploadImagesSponsors/:eventId",
   isAuthenticatedUser,
   verifyAdmin("admin"),
-  parser.fields([{ name: "galleryImgs", maxCount: 5 }]),
-  uploadImages
+  parser.fields([{ name: "sponsorImg", maxCount: 8 }]),
+  updateImagesOfSponsors
 );
 router.patch(
-  "/uploadThumbline/:eventId",
+  "/uploadCoverImgPort/:eventId",
   isAuthenticatedUser,
   verifyAdmin("admin"),
-  parser.fields([{ name: "thumbnail", maxCount: 1 }]),
-  uploadThumbline
+  parser.fields([{ name: "coverImgPort", maxCount: 1 }]),
+  updateCoverImgPort
+);
+
+router.patch(
+  "/uploadImage/:eventId",
+  isAuthenticatedUser,
+  verifyAdmin("admin"),
+  parser.fields([{ name: "image", maxCount: 1 }]),
+  updateImage
 );
 
 module.exports = router;

@@ -30,47 +30,54 @@ exports.allEvent = catchAsyncErrors(async (req, res, next) => {
 exports.createEvent = catchAsyncErrors(async (req, res, next) => {
   const {
     title,
-    subTitle,
-    organizers,
-    participants,
-    startDate,
-    endDate,
-    durationInHour,
-    galleryTitle,
+    shortDescription,
+    schedules,
+    sponsors,
+    inEventsPage,
     description,
   } = req.body;
 
-  const imageUrls = [];
-  for (let i = 0; i < req.files?.galleryImgs?.length; i++) {
-    imageUrls.push(req.files.galleryImgs[i].path);
+  for (let i = 0; i < req.files?.sponsorImg?.length; i++) {
+    sponsors[i].sponsorImg = req.files.sponsorImg[i].path;
   }
-  console.log(req.author);
+
   const event = new Event({
     title,
-    subTitle,
-    organizers,
-    participants,
-    coverImg: req.files?.coverImg[0]?.path,
-    thumbnail: req.files?.thumbnail[0]?.path,
-    galleryTitle,
-    galleryImgs: imageUrls,
-    startDate,
-    endDate,
-    durationInHour,
+    shortDescription,
+    coverImgLand: req.files?.coverImgLand[0]?.path,
+    coverImgPort: req.files?.coverImgPort[0]?.path,
+    image: req.files?.image[0]?.path,
+    schedules,
+    sponsors,
+    inEventsPage,
     description,
     createdBy: req.user._id,
   });
 
   const result = await event.save();
 
-  res.json({
+  let parentEvent = await Event.findById(req.query.parentId);
+
+  if (parentEvent) {
+    parentEvent.childs.push(result._id);
+    await parentEvent.save();
+  }
+
+  res.status(200).json({
     result,
   });
 });
 
 exports.singleEvent = catchAsyncErrors(async (req, res, next) => {
   try {
-    const singleEvent = await Event.findById(req.params.eventId).lean();
+    const singleEvent = await Event.findById(req.params.eventId)
+      .lean()
+      .populate({
+        path: "childs",
+        select: "title shortDescription image",
+      })
+      .select("childs title shortDescription image");
+
     if (!singleEvent) {
       return next(new ErrorHandler("Event not found", 404));
     }
@@ -98,7 +105,6 @@ exports.updateEvent = catchAsyncErrors(async (req, res, next) => {
       req.user.role === "admin"
     ) {
       try {
-        console.log(req.body);
         event = await Event.findByIdAndUpdate(
           req.params.eventId,
           {
@@ -129,16 +135,22 @@ exports.updateEvent = catchAsyncErrors(async (req, res, next) => {
 exports.removeEvent = catchAsyncErrors(async (req, res, next) => {
   try {
     let event = await Event.findById(req.params.eventId);
-    console.log(event);
 
     if (!event) {
       return next(new ErrorHandler("Event not found", 404));
     }
 
-    const thumbnailId = getPublicId(event.thumbnail);
-    const coverImgId = getPublicId(event.coverImg);
+    const coverImgLand = getPublicId(event.coverImgLand);
+    const coverImgPort = getPublicId(event.coverImgPort);
     //! array
-    const galleryImgsId = getPublicIdList(event.galleryImgs);
+
+    let imageUrls = [];
+
+    event?.sponsors.forEach((elt) => {
+      imageUrls.push(elt.sponsorImg);
+    });
+
+    const galleryImgsId = getPublicIdList(imageUrls);
 
     console.log(event.createdBy.toString(), req.user._id.toString());
 
@@ -147,8 +159,8 @@ exports.removeEvent = catchAsyncErrors(async (req, res, next) => {
       req.user.role === "admin"
     ) {
       try {
-        removeImageFromCloud(thumbnailId);
-        removeImageFromCloud(coverImgId);
+        removeImageFromCloud(coverImgLand);
+        removeImageFromCloud(coverImgPort);
         removeImageFromCloudList(galleryImgsId);
 
         await Event.findByIdAndRemove(req.params.eventId);
@@ -169,8 +181,8 @@ exports.removeEvent = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-// cover image update
-exports.uploadCover = catchAsyncErrors(async (req, res, next) => {
+//!  cover image update coverImgLand
+exports.updateCoverImgLand = catchAsyncErrors(async (req, res, next) => {
   try {
     const file = req.files;
 
@@ -185,11 +197,11 @@ exports.uploadCover = catchAsyncErrors(async (req, res, next) => {
         event.createdBy.toString() === req.user._id.toString() ||
         req.user.role === "admin"
       ) {
-        const coverImgId = getPublicId(event.coverImg);
-        removeImageFromCloud(coverImgId);
+        const coverImgLand = getPublicId(event.coverImgLand);
+        removeImageFromCloud(coverImgLand);
 
         const updateCoverImageUrl = {
-          coverImg: req.files?.coverImg[0]?.path,
+          coverImgLand: req.files?.coverImgLand[0]?.path,
         };
 
         event = await Event.findByIdAndUpdate(
@@ -215,8 +227,8 @@ exports.uploadCover = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-// galleryImgs update
-exports.uploadImages = catchAsyncErrors(async (req, res, next) => {
+//! uploadImagesSponsors update
+exports.updateImagesOfSponsors = catchAsyncErrors(async (req, res, next) => {
   try {
     const file = req.files;
 
@@ -227,7 +239,13 @@ exports.uploadImages = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Event not found", 404));
       }
 
-      const galleryImgsId = getPublicIdList(event.galleryImgs);
+      let imageUrls = [];
+
+      event?.sponsors.forEach((elt) => {
+        imageUrls.push(elt.sponsorImg);
+      });
+
+      const galleryImgsId = getPublicIdList(imageUrls);
 
       if (
         event.createdBy.toString() === req.user._id.toString() ||
@@ -235,18 +253,55 @@ exports.uploadImages = catchAsyncErrors(async (req, res, next) => {
       ) {
         removeImageFromCloudList(galleryImgsId);
 
-        const imageUrls = [];
-        for (let i = 0; i < req.files?.galleryImgs.length; i++) {
-          imageUrls.push(req.files.galleryImgs[i].path);
+        for (let i = 0; i < req.files?.sponsorImg?.length; i++) {
+          sponsors[i].sponsorImg = req.files?.sponsorImg[i].path;
         }
 
-        const updateGalleryImgsUrl = {
-          galleryImgs: imageUrls,
+        await event.save({
+          new: true,
+          runValidators: true,
+          useFindAndModify: false,
+        });
+
+        res.status(200).json({
+          success: true,
+          event,
+        });
+      } else {
+        return next(new ErrorHandler("Admin can update the event", 401));
+      }
+    }
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
+
+//! updateCoverImgPort coverImgPort
+exports.updateCoverImgPort = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const file = req.files;
+
+    if (file !== "") {
+      let event = await Event.findById(req.params.eventId);
+
+      if (!event) {
+        return next(new ErrorHandler("Event not found", 404));
+      }
+
+      if (
+        event.createdBy.toString() === req.user._id.toString() ||
+        req.user.role === "admin"
+      ) {
+        const coverImgPort = getPublicId(event.coverImgPort);
+        removeImageFromCloud(coverImgPort);
+
+        const updateCoverImgPortUrl = {
+          coverImgPort: req.files?.coverImgPort[0]?.path,
         };
 
         event = await Event.findByIdAndUpdate(
           req.params.eventId,
-          updateGalleryImgsUrl,
+          updateCoverImgPortUrl,
           {
             new: true,
             runValidators: true,
@@ -267,8 +322,8 @@ exports.uploadImages = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-// uploadThumbline
-exports.uploadThumbline = catchAsyncErrors(async (req, res, next) => {
+//! uploadImages image
+exports.updateImage = catchAsyncErrors(async (req, res, next) => {
   try {
     const file = req.files;
 
@@ -283,16 +338,16 @@ exports.uploadThumbline = catchAsyncErrors(async (req, res, next) => {
         event.createdBy.toString() === req.user._id.toString() ||
         req.user.role === "admin"
       ) {
-        const thumbnailId = getPublicId(event.thumbnail);
-        removeImageFromCloud(thumbnailId);
+        const image = getPublicId(event.image);
+        removeImageFromCloud(image);
 
-        const updateThumbnailImageUrl = {
-          thumbnail: req.files?.thumbnail[0]?.path,
+        const updateImageUrl = {
+          image: req.files?.image[0]?.path,
         };
 
         event = await Event.findByIdAndUpdate(
           req.params.eventId,
-          updateThumbnailImageUrl,
+          updateImageUrl,
           {
             new: true,
             runValidators: true,

@@ -29,7 +29,7 @@ router.get("/", getAllUsers);
 router.get("/userProfile", isAuthenticatedUser, getUserDetails);
 
 // auth routes
-router.post("/singup", parser.single("avatar"), signup); //parser.single("avatar")
+router.post("/singup", parser.single("avatar"), signup);
 router.post("/signin", signin);
 router.get("/sigout", isAuthenticatedUser, signout);
 
