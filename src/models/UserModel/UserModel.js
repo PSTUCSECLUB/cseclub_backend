@@ -15,12 +15,21 @@ const userSchema = new Schema({
   },
   email: {
     type: String,
-    required: true,
     unique: true,
+    required: [true, "Please enter your email"],
+    lowercase: true,
+    validate: {
+      validator: function (value) {
+        return /^[\w-]+@cse\.pstu\.ac\.bd$/.test(value);
+      },
+      message: "Please enter a your university mail",
+    },
   },
   password: {
     type: String,
-    required: true,
+    required: [true, "Please enter your password"],
+    minLength: [8, "Must be at least 8"],
+    select: false,
   },
   avatar: {
     type: String,
