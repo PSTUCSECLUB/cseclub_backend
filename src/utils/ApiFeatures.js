@@ -20,7 +20,6 @@ class APIFeatures {
 
   // search depend on title
   search() {
-    console.log(this.queryString.keyword);
     const keyword = this.queryString.keyword
       ? {
           title: {
@@ -29,9 +28,6 @@ class APIFeatures {
           },
         }
       : {};
-
-    //console.log({ ...keyword });
-
     this.query = this.query.find({ ...keyword });
     return this;
   }
