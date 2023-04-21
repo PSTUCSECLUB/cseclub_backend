@@ -25,8 +25,8 @@ router.get("/", allEvent);
 // ! query parameter need when you add child event
 router.post(
   "/",
-  isAuthenticatedUser,
-  verifyAdmin("admin"),
+  // isAuthenticatedUser,
+  // verifyAdmin("admin"),
   parser.fields([
     { name: "coverImgLand", maxCount: 1 },
     { name: "coverImgPort", maxCount: 1 },
