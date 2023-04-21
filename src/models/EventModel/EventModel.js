@@ -8,11 +8,20 @@ const eventSchema = new Schema({
   },
   shortDescription: {
     type: String,
-    required: false,
+    required: true,
   },
-  coverImgLand: String,
-  coverImgPort: String,
-  image: String,
+  coverImgLand: {
+    type: String,
+    required: true,
+  },
+  coverImgPort: {
+    type: String,
+    required: true,
+  },
+  image: {
+    type: String,
+    required: true,
+  },
   schedules: [
     {
       _id: false,
@@ -29,7 +38,10 @@ const eventSchema = new Schema({
       sponsorImg: String,
     },
   ],
-  inEventsPage: Boolean,
+  inEventsPage: {
+    type: Boolean,
+    default: false,
+  },
   childs: [
     {
       type: mongoose.Schema.Types.ObjectId,

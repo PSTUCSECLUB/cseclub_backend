@@ -23,7 +23,7 @@ exports.allEvent = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({
     success: true,
     events: allEvents,
-    eventCount,
+    totalEventsCount: eventCount,
   });
 });
 
@@ -76,7 +76,7 @@ exports.singleEvent = catchAsyncErrors(async (req, res, next) => {
         path: "childs",
         select: "title shortDescription image",
       })
-      .select("childs title shortDescription image");
+      .select("-inEventsPage");
 
     if (!singleEvent) {
       return next(new ErrorHandler("Event not found", 404));

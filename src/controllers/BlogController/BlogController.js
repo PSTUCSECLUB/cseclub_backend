@@ -42,7 +42,7 @@ exports.allBlog = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({
     success: true,
     blogs: allBlogs,
-    blogCount,
+    totalBlogsCount: blogCount,
   });
 });
 
@@ -118,13 +118,13 @@ exports.removeBlog = catchAsyncErrors(async (req, res, next) => {
 
         res.status(200).json({
           success: true,
-          message: "Blog deleted successfully",
+          message: "Blog is deleted successfully",
         });
       } catch (error) {
         res.status(500).json(error);
       }
     } else {
-      return next(new ErrorHandler("You can Delete only your post!", 401));
+      return next(new ErrorHandler("You can Delete only your blog!", 401));
     }
   } catch (error) {
     res.status(500).json(error);
@@ -139,7 +139,7 @@ exports.updateBlogCover = catchAsyncErrors(async (req, res, next) => {
       let blog = await Blog.findById(req.params.blogId);
 
       if (!blog) {
-        return next(new ErrorHandler("Blog not found", 404));
+        return next(new ErrorHandler("Blog is not found", 404));
       }
 
       if (blog.author.toString() === req.user._id.toString()) {
