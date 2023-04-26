@@ -28,7 +28,7 @@ exports.allEvent = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.createEvent = catchAsyncErrors(async (req, res, next) => {
-  const {
+  let {
     title,
     shortDescription,
     schedules,
@@ -36,9 +36,10 @@ exports.createEvent = catchAsyncErrors(async (req, res, next) => {
     inEventsPage,
     description,
   } = req.body;
+  sponsors = JSON.parse(sponsors);
 
   for (let i = 0; i < req.files?.sponsorImg?.length; i++) {
-    sponsors[i].sponsorImg = req.files.sponsorImg[i].path;
+    sponsors[i].img = req.files.sponsorImg[i].path;
   }
 
   const event = new Event({
@@ -47,11 +48,12 @@ exports.createEvent = catchAsyncErrors(async (req, res, next) => {
     coverImgLand: req.files?.coverImgLand[0]?.path,
     coverImgPort: req.files?.coverImgPort[0]?.path,
     image: req.files?.image[0]?.path,
-    schedules,
+    schedules: JSON.parse(schedules),
     sponsors,
     inEventsPage,
     description,
-    createdBy: req.user._id,
+
+    // createdBy: req.user._id,
   });
 
   const result = await event.save();

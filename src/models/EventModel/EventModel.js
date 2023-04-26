@@ -35,7 +35,7 @@ const eventSchema = new Schema({
       _id: false,
       name: String,
       site: String,
-      sponsorImg: String,
+      img: String,
     },
   ],
   inEventsPage: {
