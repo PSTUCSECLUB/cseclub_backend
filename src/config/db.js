@@ -15,7 +15,7 @@ const connectDatabase = async () => {
         family: 4,
       }
     );
-    console.log(`Database is running on ${connection.host}`);
+    //console.log(`Database is running on ${connection.host}`);
   } catch (error) {
     console.log(error);
   }

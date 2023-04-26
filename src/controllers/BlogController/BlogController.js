@@ -29,7 +29,6 @@ exports.createBlog = catchAsyncErrors(async (req, res, next) => {
 
 exports.allBlog = catchAsyncErrors(async (req, res, next) => {
   const blogCount = await Blog.countDocuments();
-  console.log(req.query);
   const apiFeatures = new APIFeatures(Blog.find(), req.query)
     .search()
     .filter()
@@ -39,7 +38,7 @@ exports.allBlog = catchAsyncErrors(async (req, res, next) => {
 
   const allBlogs = await apiFeatures.query;
 
-  res.status(201).json({
+  res.status(200).json({
     success: true,
     blogs: allBlogs,
     totalBlogsCount: blogCount,

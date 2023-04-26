@@ -35,8 +35,10 @@ app.use(limiter);
 // routers
 
 app.use("/api/v1", router);
+
 // custom error middleware
 app.use(ErrorHandler);
+
 app.use(async (req, res, next) => {
   //next(createError.NotFound());
   res.send(createError.NotFound());
