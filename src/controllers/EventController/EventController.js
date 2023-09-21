@@ -8,6 +8,8 @@ const {
   removeImageFromCloudList,
 } = require("../../utils/cloud");
 const APIFeatures = require("../../utils/ApiFeatures");
+const { removeSingleImg, removeMultipleImgs } = require("../../utils/Images");
+const Sponsor = require("../../models/SponsorModel/SponsorModel");
 
 exports.allEvent = catchAsyncErrors(async (req, res, next) => {
   const eventCount = await Event.countDocuments();
@@ -19,7 +21,6 @@ exports.allEvent = catchAsyncErrors(async (req, res, next) => {
     .search();
 
   const allEvents = await apiFeatures.query;
-
   res.status(201).json({
     success: true,
     events: allEvents,
@@ -31,61 +32,57 @@ exports.createEvent = catchAsyncErrors(async (req, res, next) => {
   let {
     title,
     shortDescription,
-    schedules,
-    sponsors,
-    inEventsPage,
+    // schedules,
     description,
+    participants,
+    websiteLink,
+    startDate,
+    endDate,
   } = req.body;
-  sponsors = JSON.parse(sponsors);
 
-  for (let i = 0; i < req.files?.sponsorImg?.length; i++) {
-    sponsors[i].img = req.files.sponsorImg[i].path;
+  // sponsors = JSON.parse(sponsors);
+
+  // work on the image and images
+  let image = process.env.URL + "/events/" + req.files.image[0].filename;
+  let images = [];
+  if (req.files.images) {
+    for (let img of req.files.images) {
+      images.push(process.env.URL + "/events/" + img.filename);
+    }
   }
 
+  // handle sponsors
+
+  // create the image
   const event = new Event({
     title,
     shortDescription,
-    coverImgLand: req.files?.coverImgLand[0]?.path,
-    coverImgPort: req.files?.coverImgPort[0]?.path,
-    image: req.files?.image[0]?.path,
-    schedules: JSON.parse(schedules),
-    sponsors,
-    inEventsPage,
+    image,
+    images,
     description,
-
+    startDate,
+    endDate,
+    participants,
+    websiteLink,
     // createdBy: req.user._id,
   });
 
-  const result = await event.save();
-
-  let parentEvent = await Event.findById(req.query.parentId);
-
-  if (parentEvent) {
-    parentEvent.childs.push(result._id);
-    await parentEvent.save();
-  }
-
+  const savedEvent = await event.save();
   res.status(200).json({
-    result,
+    success: true,
+    event: savedEvent,
   });
 });
 
 exports.singleEvent = catchAsyncErrors(async (req, res, next) => {
   try {
-    const singleEvent = await Event.findById(req.params.eventId)
-      .lean()
-      .populate({
-        path: "childs",
-        select: "title shortDescription image",
-      })
-      .select("-inEventsPage");
-
+    const singleEvent = await Event.findById(req.params.eventId);
     if (!singleEvent) {
       return next(new ErrorHandler("Event not found", 404));
     }
     res.status(200).json({
       success: true,
-      singleEvent,
+      event: singleEvent,
     });
   } catch (error) {
     res.status(500).json(error);
@@ -94,40 +91,82 @@ exports.singleEvent = catchAsyncErrors(async (req, res, next) => {
 
 //! json data
 // * ("MM/DD/YYYY hh:mm:ss"))
+
+/* Updating event-----
+1. image might be updated
+2. images might be updated
+3. normal data might be updated
+4. sponsors might be updated with new sponsors
+   or removedSponsors */
+
 exports.updateEvent = catchAsyncErrors(async (req, res, next) => {
   try {
+    console.log("we are at update");
     let event = await Event.findById(req.params.eventId);
-
     if (!event) {
       return next(new ErrorHandler("Event not found", 404));
     }
 
-    if (
-      event.createdBy.toString() === req.user._id.toString() ||
-      req.user.role === "admin"
-    ) {
-      try {
-        event = await Event.findByIdAndUpdate(
-          req.params.eventId,
-          {
-            $set: req.body,
-          },
-          {
-            new: true,
-            runValidators: true,
-            useFindAndModify: false,
-          }
-        );
-        res.status(200).json({
-          success: true,
-          event,
-        });
-      } catch (error) {
-        res.status(500).json(err);
+    // if (
+    //   event.createdBy.toString() === req.user._id.toString() ||
+    //   req.user.role === "admin"
+    // ) {
+
+    try {
+      // if some images are deleted
+      let imagesChanged = false;
+      let images = event.images;
+      // if images are removed
+      if (req.body.removedImages) {
+        imagesChanged = true;
+        let { removedImages } = req.body;
+        removedImages =
+          typeof removedImages === "string"
+            ? JSON.parse(removedImages)
+            : removedImages;
+        removeMultipleImgs(removedImages);
+        images = images.filter((img) => !removedImages.includes(img));
       }
-    } else {
-      return next(new ErrorHandler("Admin can update the event", 401));
+      // if new images are added
+      if (req.files.images) {
+        imagesChanged = true;
+        for (let img of req.files.images) {
+          images.push(process.env.URL + "/events/" + img.filename);
+        }
+      }
+      if (imagesChanged) {
+        req.body.images = images;
+      }
+      // if the main image change
+      if (req.files.image) {
+        req.body.image =
+          process.env.URL + "/events/" + req.files.image[0].filename;
+        removeSingleImg(event.image);
+      }
+      // if sponsor images are d
+      event = await Event.findByIdAndUpdate(
+        req.params.eventId,
+        {
+          $set: req.body,
+        },
+        {
+          new: true,
+          runValidators: true,
+          useFindAndModify: false,
+        }
+      );
+
+      res.status(200).json({
+        success: true,
+        event,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
     }
+    // } else {
+    //   return next(new ErrorHandler("Admin can update the event", 401));
+    // }
   } catch (error) {
     res.status(500).json(error);
   }
@@ -141,231 +180,221 @@ exports.removeEvent = catchAsyncErrors(async (req, res, next) => {
     if (!event) {
       return next(new ErrorHandler("Event not found", 404));
     }
+    // remove images
+    if (event.image) {
+      removeSingleImg(event.image);
+    }
+    if (event.images.length) {
+      removeMultipleImgs(event.images);
+    }
+    // for (let s of event.sponsors) {
+    //   if (s.img) {
+    //     removeSingleImg(s.img);
+    //   }
+    // }
 
-    const coverImgLand = getPublicId(event.coverImgLand);
-    const coverImgPort = getPublicId(event.coverImgPort);
-    //! array
-
-    let imageUrls = [];
-
-    event?.sponsors.forEach((elt) => {
-      imageUrls.push(elt.sponsorImg);
+    // removing images from the description
+    let matches = event.description.match(/src="(.*?)"/g);
+    let qImgFiles = [];
+    if (matches) {
+      for (let m of matches) {
+        qImgFiles.push(m.slice(5, m.length - 1));
+      }
+      removeMultipleImgs(qImgFiles);
+    }
+    await Event.findByIdAndRemove(req.params.eventId);
+    res.status(200).json({
+      success: true,
+      message: "Event deleted successfully",
     });
-
-    const galleryImgsId = getPublicIdList(imageUrls);
-
-    console.log(event.createdBy.toString(), req.user._id.toString());
-
-    if (
-      event.createdBy.toString() === req.user._id.toString() ||
-      req.user.role === "admin"
-    ) {
-      try {
-        removeImageFromCloud(coverImgLand);
-        removeImageFromCloud(coverImgPort);
-        removeImageFromCloudList(galleryImgsId);
-
-        await Event.findByIdAndRemove(req.params.eventId);
-
-        res.status(200).json({
-          success: true,
-          message: "Event deleted successfully",
-        });
-      } catch (error) {
-        res.status(500).json(error);
-        console.log(error);
-      }
-    } else {
-      return next(new ErrorHandler("Admin can update the event", 401));
-    }
   } catch (error) {
+    console.log(error);
     res.status(500).json(error);
   }
 });
 
-//!  cover image update coverImgLand
-exports.updateCoverImgLand = catchAsyncErrors(async (req, res, next) => {
-  try {
-    const file = req.files;
+// //!  cover image update coverImgLand
+// exports.updateCoverImgLand = catchAsyncErrors(async (req, res, next) => {
+//   try {
+//     const file = req.files;
+//     console.log(req.files);
+//     if (file !== "") {
+//       let event = await Event.findById(req.params.eventId);
 
-    if (file !== "") {
-      let event = await Event.findById(req.params.eventId);
+//       if (!event) {
+//         return next(new ErrorHandler("Event not found", 404));
+//       }
 
-      if (!event) {
-        return next(new ErrorHandler("Event not found", 404));
-      }
+//       // if (
+//       //   event.createdBy.toString() === req.user._id.toString() ||
+//       //   req.user.role === "admin"
+//       // ) {
+//       const coverImgLand = getPublicId(event.coverImgLand);
+//       removeImageFromCloud(coverImgLand);
 
-      if (
-        event.createdBy.toString() === req.user._id.toString() ||
-        req.user.role === "admin"
-      ) {
-        const coverImgLand = getPublicId(event.coverImgLand);
-        removeImageFromCloud(coverImgLand);
+//       const updateCoverImageUrl = {
+//         coverImgLand: req.files?.coverImgLand[0]?.path,
+//       };
 
-        const updateCoverImageUrl = {
-          coverImgLand: req.files?.coverImgLand[0]?.path,
-        };
+//       event = await Event.findByIdAndUpdate(
+//         req.params.eventId,
+//         updateCoverImageUrl,
+//         {
+//           new: true,
+//           runValidators: true,
+//           useFindAndModify: false,
+//         }
+//       );
 
-        event = await Event.findByIdAndUpdate(
-          req.params.eventId,
-          updateCoverImageUrl,
-          {
-            new: true,
-            runValidators: true,
-            useFindAndModify: false,
-          }
-        );
+//       res.status(200).json({
+//         success: true,
+//         event,
+//       });
+//       // } else {
+//       //   return next(new ErrorHandler("Admin can update the event", 401));
+//       // }
+//     }
+//   } catch (error) {
+//     res.status(500).json(error);
+//   }
+// });
 
-        res.status(200).json({
-          success: true,
-          event,
-        });
-      } else {
-        return next(new ErrorHandler("Admin can update the event", 401));
-      }
-    }
-  } catch (error) {
-    res.status(500).json(error);
-  }
-});
+// //! uploadImagesSponsors update
+// exports.updateImagesOfSponsors = catchAsyncErrors(async (req, res, next) => {
+//   try {
+//     const file = req.files;
+//     if (file !== "") {
+//       let event = await Event.findById(req.params.eventId);
 
-//! uploadImagesSponsors update
-exports.updateImagesOfSponsors = catchAsyncErrors(async (req, res, next) => {
-  try {
-    const file = req.files;
+//       if (!event) {
+//         return next(new ErrorHandler("Event not found", 404));
+//       }
 
-    if (file !== "") {
-      let event = await Event.findById(req.params.eventId);
+//       let imageUrls = [];
+//       let sponsors = event?.sponsors;
+//       sponsors.forEach((elt) => {
+//         elt.img && imageUrls.push(elt.img);
+//       });
 
-      if (!event) {
-        return next(new ErrorHandler("Event not found", 404));
-      }
+//       const galleryImgsId = getPublicIdList(imageUrls);
 
-      let imageUrls = [];
+//       // if (
+//       //   event.createdBy.toString() === req.user._id.toString() ||
+//       //   req.user.role === "admin"
+//       // ) {
+//       removeImageFromCloudList(galleryImgsId);
+//       for (let i = 0; i < req.files?.sponsorImg?.length; i++) {
+//         sponsors[i].img = req.files?.sponsorImg[i].path;
+//       }
 
-      event?.sponsors.forEach((elt) => {
-        imageUrls.push(elt.sponsorImg);
-      });
+//       await event.save({
+//         new: true,
+//         runValidators: true,
+//         useFindAndModify: false,
+//       });
 
-      const galleryImgsId = getPublicIdList(imageUrls);
+//       res.status(200).json({
+//         success: true,
+//         event,
+//       });
+//       // } else {
+//       //   return next(new ErrorHandler("Admin can update the event", 401));
+//       // }
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json(error);
+//   }
+// });
 
-      if (
-        event.createdBy.toString() === req.user._id.toString() ||
-        req.user.role === "admin"
-      ) {
-        removeImageFromCloudList(galleryImgsId);
+// //! updateCoverImgPort coverImgPort
+// exports.updateCoverImgPort = catchAsyncErrors(async (req, res, next) => {
+//   try {
+//     const file = req.files;
 
-        for (let i = 0; i < req.files?.sponsorImg?.length; i++) {
-          sponsors[i].sponsorImg = req.files?.sponsorImg[i].path;
-        }
+//     if (file !== "") {
+//       let event = await Event.findById(req.params.eventId);
 
-        await event.save({
-          new: true,
-          runValidators: true,
-          useFindAndModify: false,
-        });
+//       if (!event) {
+//         return next(new ErrorHandler("Event not found", 404));
+//       }
 
-        res.status(200).json({
-          success: true,
-          event,
-        });
-      } else {
-        return next(new ErrorHandler("Admin can update the event", 401));
-      }
-    }
-  } catch (error) {
-    res.status(500).json(error);
-  }
-});
+//       // if (
+//       //   event.createdBy.toString() === req.user._id.toString() ||
+//       //   req.user.role === "admin"
+//       // ) {
+//       const coverImgPort = getPublicId(event.coverImgPort);
+//       removeImageFromCloud(coverImgPort);
 
-//! updateCoverImgPort coverImgPort
-exports.updateCoverImgPort = catchAsyncErrors(async (req, res, next) => {
-  try {
-    const file = req.files;
+//       const updateCoverImgPortUrl = {
+//         coverImgPort: req.files?.coverImgPort[0]?.path,
+//       };
 
-    if (file !== "") {
-      let event = await Event.findById(req.params.eventId);
+//       event = await Event.findByIdAndUpdate(
+//         req.params.eventId,
+//         updateCoverImgPortUrl,
+//         {
+//           new: true,
+//           runValidators: true,
+//           useFindAndModify: false,
+//         }
+//       );
 
-      if (!event) {
-        return next(new ErrorHandler("Event not found", 404));
-      }
+//       res.status(200).json({
+//         success: true,
+//         event,
+//       });
+//       // } else {
+//       //   return next(new ErrorHandler("Admin can update the event", 401));
+//       // }
+//     }
+//   } catch (error) {
+//     res.status(500).json(error);
+//   }
+// });
 
-      if (
-        event.createdBy.toString() === req.user._id.toString() ||
-        req.user.role === "admin"
-      ) {
-        const coverImgPort = getPublicId(event.coverImgPort);
-        removeImageFromCloud(coverImgPort);
+// //! uploadImages image
+// exports.updateImage = catchAsyncErrors(async (req, res, next) => {
+//   try {
+//     const file = req.files;
 
-        const updateCoverImgPortUrl = {
-          coverImgPort: req.files?.coverImgPort[0]?.path,
-        };
+//     if (file !== "") {
+//       let event = await Event.findById(req.params.eventId);
 
-        event = await Event.findByIdAndUpdate(
-          req.params.eventId,
-          updateCoverImgPortUrl,
-          {
-            new: true,
-            runValidators: true,
-            useFindAndModify: false,
-          }
-        );
+//       if (!event) {
+//         return next(new ErrorHandler("Event not found", 404));
+//       }
 
-        res.status(200).json({
-          success: true,
-          event,
-        });
-      } else {
-        return next(new ErrorHandler("Admin can update the event", 401));
-      }
-    }
-  } catch (error) {
-    res.status(500).json(error);
-  }
-});
+//       // if (
+//       //   event.createdBy.toString() === req.user._id.toString() ||
+//       //   req.user.role === "admin"
+//       // ) {
+//       const image = getPublicId(event.image);
+//       removeImageFromCloud(image);
 
-//! uploadImages image
-exports.updateImage = catchAsyncErrors(async (req, res, next) => {
-  try {
-    const file = req.files;
+//       const updateImageUrl = {
+//         image: req.files?.image[0]?.path,
+//       };
 
-    if (file !== "") {
-      let event = await Event.findById(req.params.eventId);
+//       event = await Event.findByIdAndUpdate(
+//         req.params.eventId,
+//         updateImageUrl,
+//         {
+//           new: true,
+//           runValidators: true,
+//           useFindAndModify: false,
+//         }
+//       );
 
-      if (!event) {
-        return next(new ErrorHandler("Event not found", 404));
-      }
-
-      if (
-        event.createdBy.toString() === req.user._id.toString() ||
-        req.user.role === "admin"
-      ) {
-        const image = getPublicId(event.image);
-        removeImageFromCloud(image);
-
-        const updateImageUrl = {
-          image: req.files?.image[0]?.path,
-        };
-
-        event = await Event.findByIdAndUpdate(
-          req.params.eventId,
-          updateImageUrl,
-          {
-            new: true,
-            runValidators: true,
-            useFindAndModify: false,
-          }
-        );
-
-        res.status(200).json({
-          success: true,
-          event,
-        });
-      } else {
-        return next(new ErrorHandler("Admin can update the event", 401));
-      }
-    }
-  } catch (error) {
-    res.status(500).json(error);
-  }
-});
+//       res.status(200).json({
+//         success: true,
+//         event,
+//       });
+//       // } else {
+//       //   return next(new ErrorHandler("Admin can update the event", 401));
+//       // }
+//     }
+//   } catch (error) {
+//     res.status(500).json(error);
+//   }
+// });

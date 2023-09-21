@@ -10,9 +10,8 @@ exports.removeImageFromCloud = async (public_id) => {
 
 exports.getPublicIdList = (elt) => {
   imageURLs = [];
-
   for (let i = 0; i < elt.length; i++) {
-    imageURLs.push(elt[i].split("/").pop().split(".")[0]);
+    imageURLs.push(elt[i].split("/").pop()?.split(".")[0]);
   }
 
   return imageURLs;

@@ -13,7 +13,7 @@ const router = require("./src/routes");
 const ErrorHandler = require("./src/middleware/error");
 
 const app = express();
-
+app.use(express.static("uploads/"));
 app.use(cors());
 app.use(morgan("dev"));
 app.use(bodyParser.json());
@@ -35,6 +35,9 @@ app.use(limiter);
 // routers
 
 app.use("/api/v1", router);
+
+// static files
+app.use(express.static("./uploads/events"));
 
 // custom error middleware
 app.use(ErrorHandler);

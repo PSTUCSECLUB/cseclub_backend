@@ -1,7 +1,9 @@
 const ErrorHandler = require("../utils/ErrorHandler");
 
 module.exports = (err, req, res, next) => {
-  console.log(err.message);
+  console.log("inside error processing");
+  console.log(typeof err);
+  console.log(err);
   err.message = err.message || "Internal Server Error";
   err.statusCode = err.statusCode || 500;
 

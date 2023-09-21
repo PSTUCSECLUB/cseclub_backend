@@ -28,6 +28,7 @@ class APIFeatures {
           },
         }
       : {};
+
     this.query = this.query.find({ ...keyword });
     return this;
   }
@@ -52,10 +53,15 @@ class APIFeatures {
     // Excluding those fields in order to continue current stage
     const excludedFields = ["page", "sort", "limit", "fields"];
     excludedFields.forEach((el) => delete queryObj[el]);
-
+    // Adding regex to work with startWith
+    for (let key of Object.keys(queryObj)) {
+      queryObj[key] = {
+        $regex: "^" + queryObj[key],
+        $options: "i",
+      };
+    }
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-
     this.query = this.query.find(JSON.parse(queryStr));
 
     return this;

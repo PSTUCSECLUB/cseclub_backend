@@ -24,7 +24,8 @@ const {
   verifyAdmin,
 } = require("../../middleware/verifyAuth");
 
-router.get("/", isAuthenticatedUser, verifyAdmin("admin"), getAllUsers);
+//  isAuthenticatedUser, verifyAdmin("admin"),
+router.get("/", getAllUsers);
 
 router.get("/userProfile", isAuthenticatedUser, getUserDetails);
 
