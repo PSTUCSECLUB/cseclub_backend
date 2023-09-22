@@ -10,6 +10,10 @@ const {
   removeExecutive,
   getSingleExecutive,
 } = require("../../controllers/ExecutiveController/ExecutiveController");
+const {
+  isAuthenticatedUser,
+  verifyAdmin,
+} = require("../../middleware/verifyAuth");
 
 const parser = multer({
   storage: executivesStorage,
@@ -19,13 +23,25 @@ const parser = multer({
   },
 });
 
-router.post("/", parser.single("image"), createExecutive);
+router.post(
+  "/",
+  isAuthenticatedUser,
+  verifyAdmin(),
+  parser.single("image"),
+  createExecutive
+);
 
 router.get("/", allExecutive);
 router.get("/:id", getSingleExecutive);
-router.put("/:id", parser.single("image"), updateExecutive);
+router.put(
+  "/:id",
+  isAuthenticatedUser,
+  verifyAdmin(),
+  parser.single("image"),
+  updateExecutive
+);
 
 // Delete an alumni record
-router.delete("/:id", removeExecutive);
+router.delete("/:id", isAuthenticatedUser, verifyAdmin(), removeExecutive);
 
 module.exports = router;

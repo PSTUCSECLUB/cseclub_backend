@@ -44,12 +44,6 @@ exports.createEvent = catchAsyncErrors(async (req, res, next) => {
 
   // work on the image and images
   let image = process.env.URL + "/events/" + req.files.image[0].filename;
-  let images = [];
-  if (req.files.images) {
-    for (let img of req.files.images) {
-      images.push(process.env.URL + "/events/" + img.filename);
-    }
-  }
 
   // handle sponsors
 
@@ -58,7 +52,6 @@ exports.createEvent = catchAsyncErrors(async (req, res, next) => {
     title,
     shortDescription,
     image,
-    images,
     description,
     startDate,
     endDate,
@@ -101,7 +94,6 @@ exports.singleEvent = catchAsyncErrors(async (req, res, next) => {
 
 exports.updateEvent = catchAsyncErrors(async (req, res, next) => {
   try {
-    console.log("we are at update");
     let event = await Event.findById(req.params.eventId);
     if (!event) {
       return next(new ErrorHandler("Event not found", 404));
@@ -113,30 +105,6 @@ exports.updateEvent = catchAsyncErrors(async (req, res, next) => {
     // ) {
 
     try {
-      // if some images are deleted
-      let imagesChanged = false;
-      let images = event.images;
-      // if images are removed
-      if (req.body.removedImages) {
-        imagesChanged = true;
-        let { removedImages } = req.body;
-        removedImages =
-          typeof removedImages === "string"
-            ? JSON.parse(removedImages)
-            : removedImages;
-        removeMultipleImgs(removedImages);
-        images = images.filter((img) => !removedImages.includes(img));
-      }
-      // if new images are added
-      if (req.files.images) {
-        imagesChanged = true;
-        for (let img of req.files.images) {
-          images.push(process.env.URL + "/events/" + img.filename);
-        }
-      }
-      if (imagesChanged) {
-        req.body.images = images;
-      }
       // if the main image change
       if (req.files.image) {
         req.body.image =
@@ -184,9 +152,7 @@ exports.removeEvent = catchAsyncErrors(async (req, res, next) => {
     if (event.image) {
       removeSingleImg(event.image);
     }
-    if (event.images.length) {
-      removeMultipleImgs(event.images);
-    }
+
     // for (let s of event.sponsors) {
     //   if (s.img) {
     //     removeSingleImg(s.img);

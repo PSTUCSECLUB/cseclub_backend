@@ -33,8 +33,14 @@ router.post(
   parser.fields([{ name: "images", maxCount: 7 }]),
   postImages
 );
-router.post("/uploadImg", parser.single("image"), postImage);
-router.put("/remove", deleteImage);
+router.post(
+  "/uploadImg",
+  isAuthenticatedUser,
+  verifyAdmin(),
+  parser.single("image"),
+  postImage
+);
+router.put("/remove", isAuthenticatedUser, verifyAdmin(), deleteImage);
 
 router.get("/listImgs", listImages);
 

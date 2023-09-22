@@ -8,7 +8,7 @@ const ErrorHandler = require("../../utils/ErrorHandler");
 const { getPublicId, removeImageFromCloud } = require("../../utils/cloud");
 // signup
 exports.signup = catchAsyncErrors(async (req, res, next) => {
-  const avatar = req.file.path;
+  const avatar = req.file ? req.file.path : "";
 
   const {
     name,

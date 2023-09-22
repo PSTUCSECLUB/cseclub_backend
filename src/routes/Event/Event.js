@@ -32,8 +32,8 @@ router.get("/", allEvent);
 // ! query parameter need when you add child event
 router.post(
   "/",
-  // isAuthenticatedUser,
-  // verifyAdmin("admin"),
+  isAuthenticatedUser,
+  verifyAdmin(),
   parser.fields([
     { name: "image", maxCount: 1 },
     { name: "images", maxCount: 6 },
@@ -45,7 +45,8 @@ router.get("/:eventId", singleEvent);
 //isAuthenticatedUser, verifyAdmin("admin"),
 router.put(
   "/:eventId",
-
+  isAuthenticatedUser,
+  verifyAdmin(),
   parser.fields([
     { name: "image", maxCount: 1 },
     { name: "images", maxCount: 6 },
@@ -54,11 +55,7 @@ router.put(
   updateEvent
 );
 //  isAuthenticatedUser,verifyAdmin("admin"),
-router.delete(
-  "/:eventId",
-
-  removeEvent
-);
+router.delete("/:eventId", isAuthenticatedUser, verifyAdmin(), removeEvent);
 // // isAuthenticatedUser,
 // // verifyAdmin("admin"),
 // router.patch(

@@ -15,7 +15,6 @@ async function removeSingleImg(imgUrl) {
   let publicId = imgUrl.slice(process.env.URL.length + 1);
   const { folder, fileName } = extractImgInfo(publicId);
   const filePath = path.resolve(`uploads/${folder}/${fileName}`);
-  console.log(fileName);
   await removeAFile(filePath);
 }
 
